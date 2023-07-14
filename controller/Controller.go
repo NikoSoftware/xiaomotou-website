@@ -18,14 +18,13 @@ func (u Controller) ContactMe(c *gin.Context) {
 	err := c.ShouldBindJSON(&r)
 
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 
 	err = tools.ValidateNew.Struct(r)
 	if err != nil {
 		fmt.Println(err)
-		c.JSON(http.StatusBadRequest, err)
-		return
+		panic(err)
 	}
 	r.CreateTime = time.Now()
 	tools.Db.Create(&r)
