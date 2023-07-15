@@ -2,17 +2,17 @@ package tools
 
 import (
 	"github.com/go-playground/validator/v10"
+	"reflect"
 	"regexp"
 )
 
-var ValidateNew *validator.Validate
-
-// 初始化请求参数校验
-func init() {
+func ValidateStruct(s interface{}) string {
 	validate := validator.New()
 
 	_ = validate.RegisterValidation("PhoneValidationErrors", PhoneValidationErrors)
-	ValidateNew = validate
+
+	err := validate.Struct(s)
+	return processErr(s, err)
 }
 
 // 返回TRUE则不会报错，返回FALSE则会报错
@@ -34,4 +34,27 @@ func checkMobile(phone string) bool {
 
 	// 返回 MatchString 是否匹配
 	return reg.MatchString(phone)
+}
+
+func processErr(u interface{}, err error) string {
+	if err == nil { //如果为nil 说明校验通过
+		return ""
+	}
+
+	invalid, ok := err.(*validator.InvalidValidationError) //如果是输入参数无效，则直接返回输入参数错误
+	if ok {
+		return "输入参数错误：" + invalid.Error()
+	}
+	validationErrs := err.(validator.ValidationErrors) //断言是ValidationErrors
+	for _, validationErr := range validationErrs {
+		fieldName := validationErr.Field()                    //获取是哪个字段不符合格式
+		field, ok := reflect.TypeOf(u).FieldByName(fieldName) //通过反射获取filed
+		if ok {
+			errorInfo := field.Tag.Get("reg_error_info") //获取field对应的reg_error_info tag值
+			return fieldName + ":" + errorInfo           //返回错误
+		} else {
+			return "缺失reg_error_info"
+		}
+	}
+	return ""
 }

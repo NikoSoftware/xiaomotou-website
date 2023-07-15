@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
@@ -20,11 +19,10 @@ func (u Controller) ContactMe(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
+	errorInfo := tools.ValidateStruct(r)
+	if len(errorInfo) != 0 {
 
-	err = tools.ValidateNew.Struct(r)
-	if err != nil {
-		fmt.Println(err)
-		panic(err)
+		panic(errorInfo)
 	}
 	r.CreateTime = time.Now()
 	tools.Db.Create(&r)
